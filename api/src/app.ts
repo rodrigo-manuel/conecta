@@ -11,7 +11,13 @@ import { recepciones } from "./rutas/recepciones.js";
 import { ErrorHttp } from "./seguridad.js";
 
 export const app = express();
-app.use(helmet());
+// Sin forzar HTTPS en el navegador: la demo y el acopio local corren por HTTP; producción va tras TLS.
+app.use(
+  helmet({
+    contentSecurityPolicy: { directives: { upgradeInsecureRequests: null } },
+    strictTransportSecurity: false,
+  }),
+);
 app.use(express.json({ limit: "2mb" }));
 
 // Ruta de salud: confirma que la API está viva y que la base de datos responde.

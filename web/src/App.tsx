@@ -14,9 +14,9 @@ const PAGINAS: { id: string; titulo: string; roles: string[]; Vista: () => React
   { id: "recepcion", titulo: "Recepción", roles: ["operador_acopio", "administrador"], Vista: RecepcionPagina },
   { id: "laboratorio", titulo: "Laboratorio", roles: ["analista_laboratorio", "administrador"], Vista: Laboratorio },
   { id: "liquidacion", titulo: "Liquidación", roles: ["coordinador_liquidacion", "administrador"], Vista: Liquidaciones },
-  { id: "lotes", titulo: "Lotes y trazabilidad", roles: ["jefe_planta", "gerencia", "revisor_fiscal", "administrador"], Vista: Lotes },
   { id: "portal", titulo: "Mi leche y mis pagos", roles: ["productor"], Vista: Portal },
   { id: "tablero", titulo: "Tablero", roles: ["gerencia", "revisor_fiscal", "administrador"], Vista: Tablero },
+  { id: "lotes", titulo: "Lotes y trazabilidad", roles: ["jefe_planta", "gerencia", "revisor_fiscal", "administrador"], Vista: Lotes },
   { id: "auditoria", titulo: "Auditoría", roles: ["revisor_fiscal", "administrador"], Vista: Auditoria },
 ];
 

@@ -1,0 +1,44 @@
+# Integración continua: ejecuta las pruebas y compila en cada commit (extensión 5.4).
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: conecta
+          POSTGRES_PASSWORD: solo_para_ci
+          POSTGRES_DB: conecta
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U conecta" --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: API - dependencias
+        run: npm ci
+        working-directory: api
+      - name: API - compilar
+        run: npm run build
+        working-directory: api
+      - name: API - pruebas unitarias y cobertura de liquidación
+        run: npm run test:cobertura
+        working-directory: api
+      - name: API - pruebas contra PostgreSQL
+        run: npm run test:integracion
+        working-directory: api
+        env:
+          TEST_DATABASE_URL: postgres://conecta:solo_para_ci@localhost:5432/conecta_test
+      - name: Web - dependencias
+        run: npm ci
+        working-directory: web
+      - name: Web - compilar
+        run: npm run build
+        working-directory: web

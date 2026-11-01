@@ -1,0 +1,10 @@
+{
+  "name": "Conecta COOVASER",
+  "short_name": "Conecta",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f3",
+  "theme_color": "#1f6f54",
+  "lang": "es",
+  "icons": [{ "src": "/icono.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

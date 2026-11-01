@@ -1,0 +1,80 @@
+:root {
+  --verde: #1f6f54;
+  --verde-claro: #e5f2ec;
+  --fondo: #f4f6f3;
+  --texto: #1d2522;
+  --tenue: #5b6863;
+  --borde: #d6ddd8;
+  --rojo: #a92c2c;
+  --rojo-claro: #fbeaea;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  color: var(--texto);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); }
+h1 { font-size: 1.5rem; margin: 0.5rem 0; }
+h2 { font-size: 1.05rem; margin: 0 0 0.75rem; }
+
+.cabecera { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 0.6rem 1rem; background: #fff; border-bottom: 1px solid var(--borde); }
+.cabecera nav { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1; }
+.quien { color: var(--tenue); font-size: 0.875rem; }
+.contenido { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+
+.login { max-width: 360px; margin: 10vh auto 0; padding: 1rem; text-align: center; }
+.login form { text-align: left; display: grid; gap: 0.75rem; }
+
+.tarjeta { background: #fff; border: 1px solid var(--borde); border-radius: 10px; padding: 1rem; margin: 0 0 1rem; }
+.formulario { display: grid; gap: 0.75rem; max-width: 480px; }
+.barra { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; }
+.acciones { display: flex; gap: 0.5rem; }
+
+label { display: grid; gap: 0.25rem; font-size: 0.875rem; font-weight: 600; }
+label.casilla { display: flex; align-items: center; gap: 0.5rem; }
+input, select { font: inherit; padding: 0.6rem; border: 1px solid var(--borde); border-radius: 6px; background: #fff; min-height: 44px; }
+input[type="checkbox"] { min-height: auto; width: 20px; height: 20px; }
+
+button { font: inherit; font-weight: 600; padding: 0.6rem 1rem; min-height: 44px; border: 0; border-radius: 6px; background: var(--verde); color: #fff; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.secundario { background: var(--verde-claro); color: var(--verde); }
+button.enlace { background: none; color: var(--verde); padding: 0.4rem 0.6rem; min-height: 36px; }
+button.activo { background: var(--verde-claro); color: var(--verde); padding: 0.4rem 0.6rem; min-height: 36px; }
+:focus-visible { outline: 3px solid #e0a526; outline-offset: 1px; }
+
+.tabla { overflow-x: auto; }
+.alto-limitado { max-height: 320px; overflow-y: auto; margin-top: 0.75rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.875rem; }
+th, td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--borde); text-align: left; white-space: nowrap; }
+th { color: var(--tenue); font-weight: 600; }
+
+.aviso { padding: 0.6rem 0.8rem; border-radius: 6px; margin: 0 0 0.75rem; background: var(--verde-claro); }
+.aviso-error { background: var(--rojo-claro); color: var(--rojo); }
+.texto-error { color: var(--rojo); }
+
+.estado { padding: 0.1rem 0.5rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; background: #eceff0; }
+.estado-aprobada, .estado-analizada, .estado-liquidada { background: var(--verde-claro); color: var(--verde); }
+.estado-rechazada { background: var(--rojo-claro); color: var(--rojo); }
+
+.senal { font-weight: 600; margin: 0 0 0.75rem; }
+.senal-si { color: var(--verde); }
+.senal-no { color: var(--rojo); }
+
+.indicadores { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1rem; }
+.indicadores span { color: var(--tenue); font-size: 0.875rem; display: block; }
+.indicadores strong { font-size: 1.5rem; }
+.barra-dato { display: grid; grid-template-columns: 150px 1fr 150px; gap: 0.75rem; align-items: center; margin: 0.5rem 0; font-size: 0.875rem; }
+.pista { background: #eceff0; border-radius: 4px; height: 14px; }
+.relleno { background: var(--verde); height: 100%; border-radius: 4px; }
+
+.codigo { font-size: 1.25rem; font-weight: 700; font-family: ui-monospace, Consolas, monospace; }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.25rem 1rem; }
+dt { color: var(--tenue); }
+dd { margin: 0; }
+
+@media (max-width: 600px) {
+  .barra-dato { grid-template-columns: 1fr; gap: 0.25rem; }
+}
+@media print {
+  .no-imprimir { display: none !important; }
+  body { background: #fff; }
+  .tarjeta { border: 0; }
+}

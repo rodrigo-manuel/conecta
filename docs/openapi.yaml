@@ -1,0 +1,422 @@
+openapi: 3.0.3
+info:
+  title: API de Conecta
+  version: 1.0.0
+  description: >-
+    Acopio, calidad, liquidación al productor y trazabilidad de la leche de COOVASER.
+    Todas las rutas, salvo salud y login, exigen `Authorization: Bearer <token>`.
+    El servidor valida el rol en cada operación.
+servers:
+  - url: http://localhost:3000/api
+security:
+  - bearer: []
+tags:
+  - name: Sesión
+  - name: Recepción
+  - name: Laboratorio
+  - name: Liquidación
+  - name: Trazabilidad
+  - name: Portal
+  - name: Control
+paths:
+  /salud:
+    get:
+      tags: [Control]
+      summary: Estado de la API y de la base de datos
+      security: []
+      responses:
+        "200":
+          description: Todo funciona
+          content:
+            application/json:
+              example: { estado: ok, baseDeDatos: ok, centros: 4 }
+        "503":
+          description: La base de datos no responde
+  /auth/login:
+    post:
+      tags: [Sesión]
+      summary: Inicia sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [usuario, clave]
+              properties:
+                usuario: { type: string }
+                clave: { type: string, format: password }
+      responses:
+        "200":
+          description: Token válido por 16 horas y datos del usuario
+        "400": { $ref: "#/components/responses/Invalido" }
+        "401":
+          description: Usuario o clave incorrectos (mismo mensaje en ambos casos)
+        "429":
+          description: Demasiados intentos
+  /auth/yo:
+    get:
+      tags: [Sesión]
+      summary: Datos de la sesión actual
+      responses:
+        "200": { description: Usuario de la sesión }
+        "401": { $ref: "#/components/responses/SinSesion" }
+  /centros:
+    get:
+      tags: [Control]
+      summary: Centros de acopio
+      responses:
+        "200": { description: Lista de centros }
+        "401": { $ref: "#/components/responses/SinSesion" }
+  /productores:
+    get:
+      tags: [Control]
+      summary: Productores, sin teléfonos. Todos los roles menos productor
+      responses:
+        "200": { description: Lista de productores }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /productores/{id}/autorizacion-datos:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      tags: [Control]
+      summary: Autorizaciones de tratamiento de datos (Ley 1581). Revisor, administrador o el propio productor
+      responses:
+        "200": { description: Autorizaciones registradas }
+        "403": { $ref: "#/components/responses/Prohibido" }
+    post:
+      tags: [Control]
+      summary: Registra una autorización. Operador o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [versionPolitica, medio]
+              properties:
+                versionPolitica: { type: string }
+                medio: { type: string, enum: [formato_fisico, portal, centro_acopio] }
+      responses:
+        "201": { description: Registrada }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /recepciones:
+    get:
+      tags: [Recepción]
+      summary: Lista recepciones. Todos los roles menos productor
+      parameters:
+        - { name: estado, in: query, schema: { type: string, enum: [pendiente, analizada, rechazada] } }
+        - { name: fecha, in: query, schema: { type: string, format: date } }
+        - { name: limite, in: query, schema: { type: integer, minimum: 1, maximum: 500, default: 100 } }
+      responses:
+        "200": { description: Recepciones con su resultado, si existe }
+        "403": { $ref: "#/components/responses/Prohibido" }
+    post:
+      tags: [Recepción]
+      summary: Registra una recepción de forma idempotente. Operador (de su centro) o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NuevaRecepcion" }
+      responses:
+        "201":
+          description: Creada
+          content:
+            application/json:
+              example: { id: 6f1c1e7a-0b0a-4c7e-9d11-3a1b2c3d4e5f, codigo: REC-6F1C1E7A0B0A, estado: creada }
+        "200": { description: "Ya existía ese id: no se duplica" }
+        "400": { $ref: "#/components/responses/Invalido" }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /recepciones/sincronizar:
+    post:
+      tags: [Recepción]
+      summary: Envía la cola sin conexión. Cada recepción se procesa por separado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [recepciones]
+              properties:
+                recepciones:
+                  type: array
+                  maxItems: 2000
+                  items: { $ref: "#/components/schemas/NuevaRecepcion" }
+      responses:
+        "200":
+          description: Resultado por recepción (creada, duplicada o error)
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /recepciones/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Recepción]
+      summary: Detalle. Un productor solo abre las suyas
+      responses:
+        "200": { description: Recepción }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+    patch:
+      tags: [Recepción]
+      summary: Corrige litros y temperatura, con rastro de auditoría. Operador, jefe de planta o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [litros, temperatura]
+              properties:
+                litros: { type: number }
+                temperatura: { type: number }
+      responses:
+        "200": { description: Corregida }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+        "409": { description: Ya está en una liquidación aprobada }
+  /recepciones/{id}/resultado:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [Laboratorio]
+      summary: Registra o corrige el resultado. Antibiótico positivo rechaza y alerta. Analista o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Resultado" }
+      responses:
+        "200":
+          description: Guardado
+          content:
+            application/json:
+              example: { id: 6f1c1e7a-0b0a-4c7e-9d11-3a1b2c3d4e5f, estado: analizada }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+        "409": { description: Ya está en una liquidación aprobada }
+  /recepciones/{id}/lotes:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Trazabilidad]
+      summary: "Hacia adelante: recepción → lotes"
+      responses:
+        "200": { description: Lotes que usaron la recepción }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /alertas:
+    get:
+      tags: [Laboratorio]
+      summary: Alertas de calidad
+      responses:
+        "200": { description: Alertas recientes }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /liquidaciones:
+    get:
+      tags: [Liquidación]
+      summary: Liquidaciones de la quincena que contiene la fecha
+      parameters:
+        - { name: fecha, in: query, required: true, schema: { type: string, format: date } }
+      responses:
+        "200": { description: Lista }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /liquidaciones/calcular:
+    post:
+      tags: [Liquidación]
+      summary: Calcula la quincena; rehace lo no aprobado y difiere lo que no tiene resultado. Coordinador o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fecha]
+              properties:
+                fecha: { type: string, format: date }
+      responses:
+        "200":
+          description: Resumen del cálculo
+          content:
+            application/json:
+              example: { periodo: { inicio: 2026-11-01, fin: 2026-11-15 }, creadas: 32, recepcionesDiferidas: 43 }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /liquidaciones/exportar:
+    get:
+      tags: [Liquidación]
+      summary: Archivo CSV de lo aprobado para SICOOP o para el fondo
+      parameters:
+        - { name: fecha, in: query, required: true, schema: { type: string, format: date } }
+        - { name: destino, in: query, required: true, schema: { type: string, enum: [erp, fondo] } }
+      responses:
+        "200":
+          description: CSV separado por punto y coma (formato en docs/integraciones.md)
+          content:
+            text/csv: {}
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /liquidaciones/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      tags: [Liquidación]
+      summary: Detalle por recepción. Un productor solo abre las suyas y aprobadas
+      responses:
+        "200": { description: Liquidación con detalle }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+  /liquidaciones/{id}/aprobar:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    post:
+      tags: [Liquidación]
+      summary: Aprueba y bloquea. Coordinador o administrador
+      responses:
+        "200": { description: Aprobada }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+        "409": { description: Ya estaba aprobada }
+  /parametros:
+    get:
+      tags: [Liquidación]
+      summary: Versiones de los parámetros de pago
+      responses:
+        "200": { description: Versiones ordenadas por vigencia }
+        "403": { $ref: "#/components/responses/Prohibido" }
+    post:
+      tags: [Liquidación]
+      summary: Agrega una versión; nunca edita una existente. Coordinador o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Parametros" }
+      responses:
+        "201": { description: Creada }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "409": { description: Ya existe una versión con esa fecha }
+  /lotes:
+    get:
+      tags: [Trazabilidad]
+      summary: Lista lotes
+      responses:
+        "200": { description: Lotes }
+        "403": { $ref: "#/components/responses/Prohibido" }
+    post:
+      tags: [Trazabilidad]
+      summary: Crea un lote con recepciones analizadas. Jefe de planta o administrador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [codigo, producto, fecha, recepciones]
+              properties:
+                codigo: { type: string }
+                producto: { type: string }
+                fecha: { type: string, format: date }
+                recepciones:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        "201": { description: Creado }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "409": { description: Ya existe ese código }
+        "422": { description: Hay recepciones rechazadas, sin resultado o inexistentes }
+  /lotes/{id}/trazabilidad:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      tags: [Trazabilidad]
+      summary: "Hacia atrás: lote → recepciones → productores y calidad"
+      responses:
+        "200": { description: Lote con sus recepciones }
+        "403": { $ref: "#/components/responses/Prohibido" }
+        "404": { $ref: "#/components/responses/NoExiste" }
+  /portal/recepciones:
+    get:
+      tags: [Portal]
+      summary: Recepciones del productor de la sesión
+      responses:
+        "200": { description: Solo sus recepciones }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /portal/liquidaciones:
+    get:
+      tags: [Portal]
+      summary: Liquidaciones aprobadas del productor de la sesión
+      responses:
+        "200": { description: Solo sus liquidaciones }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /tablero:
+    get:
+      tags: [Control]
+      summary: Litros del día por centro, % de rechazos, sin resultado y valor estimado a pagar
+      parameters:
+        - { name: fecha, in: query, schema: { type: string, format: date } }
+      responses:
+        "200": { description: Indicadores }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /auditoria:
+    get:
+      tags: [Control]
+      summary: Rastro de quién, cuándo y qué cambió. Revisor fiscal o administrador
+      parameters:
+        - { name: tabla, in: query, schema: { type: string, enum: [recepcion, resultado_laboratorio, liquidacion, parametro_pago] } }
+        - { name: registroId, in: query, schema: { type: string } }
+        - { name: limite, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        "200": { description: Registros de auditoría }
+        "403": { $ref: "#/components/responses/Prohibido" }
+  /mensajes:
+    get:
+      tags: [Control]
+      summary: Mensajes del adaptador falso de SMS. Administrador
+      responses:
+        "200": { description: Mensajes simulados }
+        "403": { $ref: "#/components/responses/Prohibido" }
+components:
+  securitySchemes:
+    bearer: { type: http, scheme: bearer, bearerFormat: JWT }
+  responses:
+    Invalido: { description: Datos inválidos }
+    SinSesion: { description: Falta la sesión o venció }
+    Prohibido: { description: El rol o el dueño de los datos no lo permite }
+    NoExiste: { description: El registro no existe }
+  schemas:
+    NuevaRecepcion:
+      type: object
+      required: [id, productorId, centroId, fechaHora, litros, temperatura]
+      properties:
+        id: { type: string, format: uuid, description: Lo genera el dispositivo; hace idempotente el envío }
+        productorId: { type: integer }
+        centroId: { type: integer }
+        fechaHora: { type: string, format: date-time }
+        litros: { type: number, exclusiveMinimum: true, minimum: 0, maximum: 5000 }
+        temperatura: { type: number, minimum: -5, maximum: 60 }
+    Resultado:
+      type: object
+      required: [grasa, proteina, ufc, antibioticosPositivo]
+      properties:
+        grasa: { type: number, minimum: 0, maximum: 15 }
+        proteina: { type: number, minimum: 0, maximum: 15 }
+        ufc: { type: integer, minimum: 0 }
+        antibioticosPositivo: { type: boolean }
+    Parametros:
+      type: object
+      required: [vigenteDesde, precioBase, grasaReferencia, ajustePorDecimaGrasa, proteinaReferencia, ajustePorDecimaProteina, ufcLimiteBonificacion, bonificacionUfc, ufcLimitePenalizacion, penalizacionUfc, temperaturaMaxima, penalizacionTemperatura, aporteSocialPct, ahorroMaximoPct]
+      properties:
+        vigenteDesde: { type: string, format: date }
+        precioBase: { type: number }
+        grasaReferencia: { type: number }
+        ajustePorDecimaGrasa: { type: number }
+        proteinaReferencia: { type: number }
+        ajustePorDecimaProteina: { type: number }
+        ufcLimiteBonificacion: { type: integer }
+        bonificacionUfc: { type: number }
+        ufcLimitePenalizacion: { type: integer }
+        penalizacionUfc: { type: number }
+        temperaturaMaxima: { type: number }
+        penalizacionTemperatura: { type: number }
+        aporteSocialPct: { type: number }
+        ahorroMaximoPct: { type: number }

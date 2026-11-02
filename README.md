@@ -49,7 +49,16 @@ npm run test:integracion  # API contra PostgreSQL; requiere el contenedor db enc
 | API | 39 pruebas, incluido que un productor no ve datos de otro |
 | Carga | Trazabilidad entre 24 y 37 ms con 100.960 recepciones y 1.300 en el lote (límite: 2 s) |
 
-GitHub Actions ejecuta todo en cada commit.
+GitHub Actions ejecuta las suites anteriores en cada commit.
+
+Recorridos en Microsoft Edge, con la aplicación encendida y datos recién cargados:
+
+```bash
+cd e2e
+npm ci
+npm run recorrido  # los 8 roles, de punta a punta
+npm run jornada    # 325 recepciones sin red, sin pérdidas ni duplicados
+```
 
 ## Estructura
 
@@ -61,6 +70,7 @@ GitHub Actions ejecuta todo en cada commit.
 | `web/src` | PWA: pantallas, cola sin conexión (`cola.ts`) |
 | `web/public/sw.js` | Service worker |
 | `db/init` | Esquema, triggers y datos de prueba |
+| `e2e` | Recorridos automáticos en el navegador |
 | `docs` | [OpenAPI](docs/openapi.yaml), [ADR](docs/adr/README.md), [integraciones](docs/integraciones.md), [despliegue](docs/despliegue.md), [manual por rol](docs/manual.md) |
 
 ## Licencias de terceros
@@ -74,6 +84,7 @@ Todas son permisivas y compatibles con el uso del proyecto.
 | react, react-dom | MIT | Interfaz |
 | idb | ISC | Acceso a IndexedDB |
 | vite, @vitejs/plugin-react, vitest, @vitest/coverage-v8, supertest, @types/* | MIT | Compilación y pruebas |
+| playwright-core | Apache-2.0 | Recorridos en el navegador |
 | typescript | Apache-2.0 | Compilación |
 | PostgreSQL | PostgreSQL License | Base de datos (imagen `postgres:17-alpine`) |
 | Node.js | MIT | Entorno de ejecución (imagen `node:24-alpine`) |
@@ -89,6 +100,6 @@ Todos los nombres, teléfonos y registros son ficticios. El proyecto no usa dato
 | Aspecto | Detalle |
 |---|---|
 | Herramienta | Claude Code (Anthropic), modelo Claude Opus 5.5 |
-| Para qué se usó | Generar y corregir el código, las pruebas, los scripts SQL y la documentación; proponer decisiones de arquitectura |
-| Qué hizo el autor | Definió el alcance y las prioridades, revisó y aprobó el resultado y lo ejecutó para verificarlo. Asume la responsabilidad de explicar cada decisión y cada parte del código en la sustentación |
+| Para qué se usó | Generar y corregir la mayor parte del código, las pruebas, los scripts SQL y la documentación; proponer decisiones de arquitectura |
+| Qué hizo el autor | Definió el alcance, las prioridades y el stack, dirigió el trabajo, pidió correcciones y revisó el resultado. Asume la responsabilidad de explicar cada decisión y cada parte del código en la sustentación |
 | Trazabilidad | Los commits generados con la herramienta llevan la línea `Co-Authored-By` |

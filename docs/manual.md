@@ -14,7 +14,7 @@ Entre en `http://localhost:3000` con su usuario. El menú muestra solo lo que su
 3. Un positivo rechaza la recepción, crea la alerta y avisa al productor.
 
 ## Coordinador de liquidación
-1. En **Liquidación**, elija una fecha de la quincena y pulse **Calcular**. Puede repetirlo: solo rehace lo no aprobado.
+1. En **Liquidación**, elija una fecha de la quincena y pulse **Calcular**. Puede repetirlo: solo rehace lo no aprobado. Calcule las quincenas en orden: las recepciones anteriores aún sin liquidar entran en la que se calcule primero.
 2. Abra **Ver detalle** y revise cada recepción.
 3. Pulse **Aprobar y bloquear**. Una liquidación aprobada ya no cambia.
 4. Use **Exportar a SICOOP** y **Exportar al fondo**.

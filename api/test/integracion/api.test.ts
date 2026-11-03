@@ -165,7 +165,15 @@ describe("recepción y sincronización (MVP-02, MVP-03)", () => {
   });
   describe("un operador solo actúa sobre su centro", () => {
     const deCentro = async (centro: number) => {
-      const { rows } = await pool.query("SELECT id FROM recepcion WHERE centro_id = $1 LIMIT 1", [centro]);
+      // Sin liquidación aprobada: esas están bloqueadas y responderían 409.
+      const { rows } = await pool.query(
+        `SELECT r.id FROM recepcion r
+         WHERE r.centro_id = $1 AND NOT EXISTS (
+           SELECT 1 FROM liquidacion_detalle d JOIN liquidacion l ON l.id = d.liquidacion_id
+           WHERE d.recepcion_id = r.id AND l.estado = 'aprobada')
+         ORDER BY r.fecha_hora DESC LIMIT 1`,
+        [centro],
+      );
       return rows[0].id as string;
     };
     it("no corrige una recepción de otro centro, y el dato no cambia", async () => {

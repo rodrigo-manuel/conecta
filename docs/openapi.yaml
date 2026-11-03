@@ -104,7 +104,7 @@ paths:
   /recepciones:
     get:
       tags: [Recepción]
-      summary: Lista recepciones. Todos los roles menos productor
+      summary: Lista recepciones. Todos los roles menos productor; un operador solo ve su centro
       parameters:
         - { name: estado, in: query, schema: { type: string, enum: [pendiente, analizada, rechazada] } }
         - { name: fecha, in: query, schema: { type: string, format: date } }
@@ -154,14 +154,14 @@ paths:
       - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
     get:
       tags: [Recepción]
-      summary: Detalle. Un productor solo abre las suyas
+      summary: Detalle. Un productor solo abre las suyas y un operador, las de su centro
       responses:
         "200": { description: Recepción }
         "403": { $ref: "#/components/responses/Prohibido" }
         "404": { $ref: "#/components/responses/NoExiste" }
     patch:
       tags: [Recepción]
-      summary: Corrige litros y temperatura, con rastro de auditoría. Operador, jefe de planta o administrador
+      summary: Corrige litros y temperatura, con rastro de auditoría. Operador (de su centro), jefe de planta o administrador
       requestBody:
         required: true
         content:

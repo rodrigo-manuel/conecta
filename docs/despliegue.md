@@ -60,6 +60,6 @@ El punto de recuperación es de hasta 24 horas en el servidor. Las recepciones d
 
 | Versión | Fecha objetivo | Alcance |
 |---|---|---|
-| **R1 (MVP)** | T1 2027 | Este repositorio, piloto en 2 centros y luego en los 4 |
+| **R1 (MVP)** | T1 y T2 2027 | Este repositorio; piloto en 2 centros en T1, demostración a las cadenas en abril y 4 centros al cierre de T2 |
 | **R2** | T3 2027 | Carga CSV del laboratorio, QR público de lote, identidad federada, API con el nuevo fondo |
-| **R3** | T2 2028 | Integración con el nuevo ERP, alertas de cadena de frío, analítica por ruta |
+| **R3** | T4 2028 | Integración con el nuevo ERP (en vivo desde T3 2028), alertas de cadena de frío, analítica por ruta |

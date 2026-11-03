@@ -42,7 +42,7 @@ Cada decisión indica contexto, opción elegida, alternativas descartadas y cons
 - **Contexto.** Una operadora puede trabajar 12 horas sin señal y debe poder sincronizar al final de la jornada.
 - **Decisión.** JWT firmado con vigencia de 16 horas y bcrypt con costo 10. El rol se valida en el servidor en cada operación.
 - **Descartadas.** Sesiones en servidor: no sirven sin conexión. Proveedor de identidad externo desde R1: agrega una dependencia en línea; se evaluará Keycloak en R2.
-- **Consecuencias.** Un token robado sirve hasta que venza, porque no hay revocación individual en el MVP. Esto queda como riesgo aceptado para R1 y se atiende en R2.
+- **Consecuencias.** El centro del operador viaja en el token y se verifica al registrar, consultar y corregir. Un token robado sirve hasta que venza, porque no hay revocación individual en el MVP. Esto queda como riesgo aceptado para R1 y se atiende en R2.
 
 ## ADR-007. Reglas críticas también en la base de datos
 

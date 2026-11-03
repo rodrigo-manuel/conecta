@@ -11,6 +11,8 @@ cp .env.example .env
 docker compose up --build
 ```
 
+`.env.example` trae valores solo para este ambiente de prueba; en producción cambie la clave y `JWT_SECRET` (ver [despliegue](docs/despliegue.md)).
+
 Abra <http://localhost:3000>. Los datos de prueba se cargan solos la primera vez. Para reiniciarlos con fechas de hoy:
 
 ```bash
@@ -45,8 +47,8 @@ npm run test:integracion  # API contra PostgreSQL; requiere el contenedor db enc
 
 | Suite | Resultado |
 |---|---|
-| Unitarias | 47 pruebas; 100 % de cobertura en `src/liquidacion` |
-| API | 39 pruebas, incluido que un productor no ve datos de otro |
+| Unitarias | 47 pruebas (45 de reglas y 2 de salud); 100 % de cobertura en `src/liquidacion` |
+| API | 43 pruebas, incluido que un productor no ve datos de otro y que un operador solo actúa en su centro |
 | Carga | Trazabilidad entre 24 y 37 ms con 100.960 recepciones y 1.300 en el lote (límite: 2 s) |
 
 GitHub Actions ejecuta las suites anteriores en cada commit.

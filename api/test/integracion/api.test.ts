@@ -163,6 +163,39 @@ describe("recepción y sincronización (MVP-02, MVP-03)", () => {
     const r = await request(app).post("/api/recepciones").set(como("operador")).send(nuevaRecepcion({ centroId: 2 }));
     expect(r.status).toBe(403);
   });
+  describe("un operador solo actúa sobre su centro", () => {
+    const deCentro = async (centro: number) => {
+      const { rows } = await pool.query("SELECT id FROM recepcion WHERE centro_id = $1 LIMIT 1", [centro]);
+      return rows[0].id as string;
+    };
+    it("no corrige una recepción de otro centro, y el dato no cambia", async () => {
+      const id = await deCentro(2);
+      const antes = await pool.query("SELECT litros FROM recepcion WHERE id = $1", [id]);
+      const r = await request(app).patch(`/api/recepciones/${id}`).set(como("operador")).send({ litros: 1, temperatura: 1 });
+      expect(r.status).toBe(403);
+      const despues = await pool.query("SELECT litros FROM recepcion WHERE id = $1", [id]);
+      expect(despues.rows[0].litros).toBe(antes.rows[0].litros);
+    });
+    it("sí corrige una de su centro", async () => {
+      const id = await deCentro(1);
+      const { rows } = await pool.query("SELECT litros, temperatura FROM recepcion WHERE id = $1", [id]);
+      await request(app).patch(`/api/recepciones/${id}`).set(como("operador")).send(rows[0]).expect(200);
+    });
+    it("no abre una recepción de otro centro", async () => {
+      const r = await request(app).get(`/api/recepciones/${await deCentro(2)}`).set(como("operador"));
+      expect(r.status).toBe(403);
+    });
+    it("el listado solo trae su centro", async () => {
+      const r = await request(app).get("/api/recepciones?limite=500").set(como("operador"));
+      expect(r.body.length).toBeGreaterThan(0);
+      expect(r.body.every((x: { centroId: number }) => x.centroId === 1)).toBe(true);
+    });
+    it("un rol sin centro asignado sí puede corregir en cualquier centro", async () => {
+      const id = await deCentro(2);
+      const { rows } = await pool.query("SELECT litros, temperatura FROM recepcion WHERE id = $1", [id]);
+      await request(app).patch(`/api/recepciones/${id}`).set(como("jefeplanta")).send(rows[0]).expect(200);
+    });
+  });
   it("valida las entradas y un intento de inyección no afecta la base de datos", async () => {
     const r = await request(app)
       .post("/api/recepciones")

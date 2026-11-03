@@ -14,6 +14,8 @@ const limiteIntentos = rateLimit({
   skip: () => process.env.NODE_ENV === "test",
 });
 
+const HASH_SIN_USUARIO = bcrypt.hashSync("usuario-inexistente", 10);
+
 const credenciales = z.object({ usuario: z.string().min(1).max(100), clave: z.string().min(1).max(200) });
 
 autenticacion.post("/auth/login", limiteIntentos, async (req, res) => {
@@ -24,8 +26,9 @@ autenticacion.post("/auth/login", limiteIntentos, async (req, res) => {
     [usuario],
   );
   const u = rows[0];
-  // El mismo mensaje en ambos casos para no revelar qué usuarios existen.
-  if (!u || !(await bcrypt.compare(clave, u.hash_clave))) {
+  // Mismo mensaje y mismo trabajo en ambos casos para no revelar qué usuarios existen.
+  const claveCorrecta = await bcrypt.compare(clave, u?.hash_clave ?? HASH_SIN_USUARIO);
+  if (!u || !claveCorrecta) {
     throw new ErrorHttp(401, "Usuario o clave incorrectos");
   }
   const sesion: UsuarioSesion = {

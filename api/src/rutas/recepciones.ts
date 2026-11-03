@@ -95,8 +95,9 @@ recepciones.get(
     const { rows } = await pool.query(
       `${SELECT_RECEPCION}
        WHERE ($1::text IS NULL OR r.estado = $1) AND ($2::date IS NULL OR r.fecha = $2)
+         AND ($4::int IS NULL OR r.centro_id = $4)
        ORDER BY r.fecha_hora DESC LIMIT $3`,
-      [f.estado ?? null, f.fecha ?? null, f.limite],
+      [f.estado ?? null, f.fecha ?? null, f.limite, req.usuario.centroId],
     );
     res.json(rows);
   },
@@ -110,6 +111,9 @@ recepciones.get("/recepciones/:id", async (req, res) => {
   if (!r) throw new ErrorHttp(404, "La recepción no existe");
   if (req.usuario.rol === "productor" && r.productorId !== req.usuario.productorId) {
     throw new ErrorHttp(403, "No puede ver datos de otro productor");
+  }
+  if (req.usuario.centroId !== null && r.centroId !== req.usuario.centroId) {
+    throw new ErrorHttp(403, "Solo puede ver recepciones de su centro de acopio");
   }
   res.json(r);
 });
@@ -147,12 +151,17 @@ recepciones.patch(
       .object({ litros: z.number().positive().max(5000), temperatura: z.number().min(-5).max(60) })
       .parse(req.body);
     await enTransaccion(req.usuario.id, async (c) => {
+      const { rows } = await c.query("SELECT centro_id FROM recepcion WHERE id = $1 FOR UPDATE", [id]);
+      if (!rows[0]) throw new ErrorHttp(404, "La recepción no existe");
+      if (req.usuario.centroId !== null && rows[0].centro_id !== req.usuario.centroId) {
+        throw new ErrorHttp(403, "Solo puede corregir recepciones de su centro de acopio");
+      }
       await exigirNoLiquidada(c, id);
-      const { rowCount } = await c.query(
-        "UPDATE recepcion SET litros = $2, temperatura = $3 WHERE id = $1",
-        [id, cambios.litros, cambios.temperatura],
-      );
-      if (!rowCount) throw new ErrorHttp(404, "La recepción no existe");
+      await c.query("UPDATE recepcion SET litros = $2, temperatura = $3 WHERE id = $1", [
+        id,
+        cambios.litros,
+        cambios.temperatura,
+      ]);
     });
     res.json({ id, ...cambios });
   },
